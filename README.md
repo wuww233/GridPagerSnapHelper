@@ -64,17 +64,17 @@ Scroll (vertical):<br>
 ```java
 // set listener
 snapHelper.setOnPageChangeListener(new GridPagerSnapHelper.OnPageChangeListener(){
-@Override
-public void onChange(int pageBeforeChange,int pageAfterChange){
+	@Override
+	public void onChange(int pageBeforeChange,int pageAfterChange){
         // Function will be called when current page is changed.
-        }
-        });
+	}
+});
 
 // scroll
-        snapHelper.scrollToPage(target_page_index);
-        snapHelper.smoothScrollToPage(target_page_index);
+snapHelper.scrollToPage(target_page_index);
+snapHelper.smoothScrollToPage(target_page_index);
 
 // others
-        snapHelper.getCurrentPageIndex();
-        snapHelper.getPageCount();
+snapHelper.getCurrentPageIndex();
+snapHelper.getPageCount();
 ```
