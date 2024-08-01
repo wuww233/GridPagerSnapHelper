@@ -1,6 +1,7 @@
 package com.www233.gridpagersnaphelper;
 
 import android.graphics.Rect;
+import android.os.Trace;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -18,21 +19,31 @@ import java.util.Objects;
 public class GridPagerSnapHelper extends SnapHelper {
     private static final String TAG = "GridPageSnapHelper";
     private int currentPositionVertical = 0, currentPositionHorizontal = 0; // 记录当前页的首个index
-    private final int ROW, page_limit;  // ROW限制行数/列数, page_limit每页最大数量
+    private final int row, page_limit;  // row限制行数/列数, page_limit每页最大数量
     private int all_item = 0;   // 控件总数
     private OrientationHelper mHorizontalHelper, mVerticalHelper;
     RecyclerView mRecyclerView;
     static final float MILLISECONDS_PER_INCH = 100f;
     private static final int MAX_SCROLL_ON_FLING_DURATION = 100; // ms
+    private OnPageChangeListener onPageChangeListener = (pageBeforeChange, pageAfterChange) -> {
+    };
+
+    private static class Direction {
+        static final int HORIZONTAL = 0, VERTICAL = 1;
+    }
+
+    public interface OnPageChangeListener {
+        void onChange(int pageBeforeChange, int pageAfterChange);
+    }
 
     /**
      * 初始化
      *
-     * @param ROW        不可移动的方向上有多少列/行
+     * @param row        不可移动的方向上有多少列/行
      * @param page_limit 每一页最多有多少控件
      */
-    public GridPagerSnapHelper(int ROW, int page_limit) {
-        this.ROW = ROW;
+    public GridPagerSnapHelper(int row, int page_limit) {
+        this.row = row;
         this.page_limit = page_limit;
     }
 
@@ -63,11 +74,12 @@ public class GridPagerSnapHelper extends SnapHelper {
         return mHorizontalHelper;
     }
 
-    static class Direction {
-        static final int HORIZONTAL = 0, VERTICAL = 1;
+
+    public void setOnPageChangeListener(@NonNull OnPageChangeListener onPageChangeListener) {
+        this.onPageChangeListener = onPageChangeListener;
     }
 
-    int distanceToNextPage(@NonNull RecyclerView.LayoutManager layoutManager, OrientationHelper helper, @NonNull View targetView, int direction) {
+    private int distanceToNextPage(@NonNull RecyclerView.LayoutManager layoutManager, OrientationHelper helper, @NonNull View targetView, int direction) {
         int targetPosition = layoutManager.getPosition(targetView);
         int currentPosition = (direction == Direction.HORIZONTAL ? currentPositionHorizontal : currentPositionVertical);
         int currentPageStart = currentPosition;
@@ -79,39 +91,43 @@ public class GridPagerSnapHelper extends SnapHelper {
         } else {    // 移动半块及以上时会滑动页面: 拖动时只会调用findSnapView()从而获取到距离当前页面最左边最近的view
             int dis = Math.abs(helper.getDecoratedStart(targetView) - helper.getStartAfterPadding());
 
-            if (targetPosition < currentPosition - ROW
+            if (targetPosition < currentPosition - row
                     || dis <= (helper.getDecoratedMeasurement(targetView) / 2) && targetPosition < currentPosition) {
                 // 左移且移动半块以上
                 currentPageStart = currentPosition - page_limit;
 
-            }
-            else if (targetPosition >= currentPosition + ROW
+            } else if (targetPosition >= currentPosition + row
                     || dis >= (helper.getDecoratedMeasurement(targetView) / 2) && targetPosition >= currentPosition) {
                 // 右移且移动半块以上
                 currentPageStart = currentPosition + page_limit;
             }
 
             int columnWidth = helper.getDecoratedMeasurement(targetView);
-            int distance = ((targetPosition - currentPageStart) / ROW) * columnWidth;
+            int distance = ((targetPosition - currentPageStart) / row) * columnWidth;
             final int childStart = helper.getDecoratedStart(targetView);
 
             result = childStart - distance;
         }
 
-        if (direction == Direction.HORIZONTAL)
+        if (direction == Direction.HORIZONTAL && currentPageStart != currentPositionHorizontal) {
+            onPageChangeListener.onChange(currentPositionHorizontal / page_limit,
+                    currentPageStart / page_limit);
             currentPositionHorizontal = currentPageStart;
-        else
+        } else if (direction == Direction.VERTICAL && currentPageStart != currentPositionVertical) {
+            onPageChangeListener.onChange(currentPositionVertical / page_limit,
+                    currentPageStart / page_limit);
             currentPositionVertical = currentPageStart;
+        }
 
         return result;
     }
 
     /**
      * 计算到目标页需要移动的距离
+     *
      * @param layoutManager the {@link RecyclerView.LayoutManager} associated with the attached
      *                      {@link RecyclerView}
-     * @param targetView the target view that is chosen as the view to snap
-     *
+     * @param targetView    the target view that is chosen as the view to snap
      * @return x/y上的距离
      */
     @Nullable
@@ -127,14 +143,12 @@ public class GridPagerSnapHelper extends SnapHelper {
         return out;
     }
 
-    private View findNextPage(RecyclerView.LayoutManager layoutManager, OrientationHelper helper)
-    {
+    private View findNextPage(RecyclerView.LayoutManager layoutManager, OrientationHelper helper) {
 
         final int childCount = layoutManager.getChildCount();
         if (childCount == 0) {
             return null;
         }
-
         View closestChild = null;
         final int start = helper.getStartAfterPadding();
         int closest = Integer.MAX_VALUE;
@@ -158,9 +172,9 @@ public class GridPagerSnapHelper extends SnapHelper {
 
     /**
      * 寻找用于移动的基准view(当前页距离最左边最近的view)
+     *
      * @param layoutManager the {@link RecyclerView.LayoutManager} associated with the attached
      *                      {@link RecyclerView}
-     *
      * @return view
      */
     @Nullable
@@ -174,8 +188,7 @@ public class GridPagerSnapHelper extends SnapHelper {
         return null;
     }
 
-    private int findNextPagePosition(int velocity, int currentPosition)
-    {
+    private int findNextPagePosition(int velocity, int currentPosition) {
         if (velocity > 0)   // 向右滑动
         {
             if (currentPosition + page_limit > all_item)
@@ -192,6 +205,7 @@ public class GridPagerSnapHelper extends SnapHelper {
         }
         return RecyclerView.NO_POSITION;
     }
+
     @Nullable
     private OrientationHelper getOrientationHelper(RecyclerView.LayoutManager layoutManager) {
         if (layoutManager.canScrollVertically()) {
@@ -202,6 +216,7 @@ public class GridPagerSnapHelper extends SnapHelper {
             return null;
         }
     }
+
     @Override
     public int findTargetSnapPosition(RecyclerView.LayoutManager layoutManager, int velocityX, int velocityY) {
 
@@ -232,7 +247,7 @@ public class GridPagerSnapHelper extends SnapHelper {
         if (!(layoutManager instanceof RecyclerView.SmoothScroller.ScrollVectorProvider)) {
             return null;
         }
-        return new LinearSmoothScroller(mRecyclerView.getContext() ){
+        return new LinearSmoothScroller(mRecyclerView.getContext()) {
 
             @Override
             protected void onTargetFound(View targetView, RecyclerView.State state, Action action) {
@@ -260,7 +275,7 @@ public class GridPagerSnapHelper extends SnapHelper {
     }
 
     private class ButtonPageScrollDecoration extends RecyclerView.ItemDecoration {
-        int last_line_st = all_item - ((all_item - 1) % ROW) - 1;
+        int last_line_st = all_item - ((all_item - 1) % row) - 1;
 
         @Override
         public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
@@ -268,16 +283,65 @@ public class GridPagerSnapHelper extends SnapHelper {
             int position = parent.getChildAdapterPosition(view);
             RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
             if (position >= last_line_st) { // 最后一列/列边距到末尾
-                int line = (position % page_limit) / ROW + 1;
-                int all_line = page_limit / ROW;
+                int line = (position % page_limit) / row + 1;
+                int all_line = page_limit / row;
 
                 assert layoutManager != null;
-                if(layoutManager.canScrollHorizontally())
+                if (layoutManager.canScrollHorizontally())
                     outRect.set(outRect.left, outRect.top, outRect.right + parent.getWidth() / all_line * (all_line - line), outRect.bottom);
-                if(layoutManager.canScrollVertically())
+                if (layoutManager.canScrollVertically())
                     outRect.set(outRect.left, outRect.top, outRect.right, outRect.bottom + parent.getHeight() / all_line * (all_line - line));
             }
 
         }
     }
+    public int getCurrentPageIndex() {
+        if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
+            return currentPositionHorizontal / page_limit;
+        } else {
+            return currentPositionVertical / page_limit;
+        }
+    }
+
+    public int getPageCount() {
+        return all_item / page_limit + 1;
+    }
+
+    /**
+     * 滑动至特定页面
+     *
+     * @param page_index 页面的索引 start from 0
+     * @return success(true) or not(false)
+     */
+    public boolean smoothScrollToPage(int page_index) {
+        Log.i(TAG, String.format("scrollToPage: %d", page_index));
+        if (page_index <= all_item / page_limit) {
+            if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
+                mRecyclerView.smoothScrollBy(mRecyclerView.getLayoutManager().getWidth()
+                        * (page_index - currentPositionHorizontal / page_limit), 0);
+                currentPositionHorizontal = page_index * page_limit;
+            } else {
+                mRecyclerView.smoothScrollBy(0, mRecyclerView.getLayoutManager().getHeight()
+                        * (page_index - currentPositionVertical / page_limit));
+                currentPositionVertical = page_index * page_limit;
+            }
+            return true;
+        } else return false;
+    }
+    public boolean scrollToPage(int page_index) {
+        Log.i(TAG, String.format("scrollToPage: %d", page_index));
+        if (page_index <= all_item / page_limit) {
+            if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
+                mRecyclerView.scrollBy(mRecyclerView.getLayoutManager().getWidth()
+                        * (page_index - currentPositionHorizontal / page_limit), 0);
+                currentPositionHorizontal = page_index * page_limit;
+            } else {
+                mRecyclerView.scrollBy(0, mRecyclerView.getLayoutManager().getHeight()
+                        * (page_index - currentPositionVertical / page_limit));
+                currentPositionVertical = page_index * page_limit;
+            }
+            return true;
+        } else return false;
+    }
+
 }
