@@ -32,4 +32,26 @@ A SnapHelper which makes RecyclerView be snapped like Viewpager
 // set Adapter and GridLayoutManager for your RecyclerView before setting GridPageSnapHelper
 GridPageSnapHelper snapHelper = new GridPageSnapHelper(max_size_in_each_row_or_line, max_size_of_each_page);
 snapHelper.attachToRecyclerView(your_RecyclerView_name_managed_by_GridLayoutManager);
+
+
+```
+
+## API
+
+```java
+// set listener
+snapHelper.setOnPageChangeListener(new GridPagerSnapHelper.OnPageChangeListener() {
+  @Override
+  public void onChange(int pageBeforeChange, int pageAfterChange) {
+      // Function will be called when current page is changed.
+  }
+});
+
+// scroll
+snapHelper.scrollToPage(target_page_index);
+snapHelper.smoothScrollToPage(target_page_index);
+
+// others
+snapHelper.getCurrentPageIndex();
+snapHelper.getPageCount();
 ```
