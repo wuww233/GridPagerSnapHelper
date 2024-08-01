@@ -1,0 +1,51 @@
+
+
+plugins {
+    alias(libs.plugins.androidLibrary)
+    id "com.vanniktech.maven.publish" version "0.29.0"
+}
+
+android {
+    namespace 'com.www233.gridpagersnaphelper'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+
+afterEvaluate{
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+        dependencies {
+            classpath 'com.vanniktech:gradle-maven-publish-plugin:0.17.0'
+        }
+    }
+    dependencies {
+
+        implementation libs.appcompat
+        implementation libs.material
+        testImplementation libs.junit
+        androidTestImplementation libs.ext.junit
+        androidTestImplementation libs.espresso.core
+    }
+
+    apply plugin: "com.vanniktech.maven.publish"
+}

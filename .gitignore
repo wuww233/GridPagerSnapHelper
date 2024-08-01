@@ -1,0 +1,5 @@
+/build
+gradle.properties
+/.gradle
+key.gpg
+/app/build
