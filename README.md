@@ -1,4 +1,5 @@
 # GridPagerSnapHelper
+
 A SnapHelper which makes RecyclerView be snapped like Viewpager
 
 ## Examples
@@ -19,7 +20,8 @@ Scroll (vertical):<br>
 <img src="https://raw.githubusercontent.com/wuww233/wwwImage/main/img/example_4.gif" alt="scroll_vertical">
 </details>
 
-+ Source codes of these examples are in `app/src/main/java/com/www233/gridpagersnaphelper/MainActivity.java`
++ Source codes of these examples are
+  in `app/src/main/java/com/www233/gridpagersnaphelper/MainActivity.java`
 
 ## Features
 
@@ -34,7 +36,7 @@ Scroll (vertical):<br>
 1. Add the dependence in a file like:
 
     + `build.gradle`(Groovy)
-      
+
       ```groovy
       dependencies {
         implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.0'
@@ -57,24 +59,22 @@ Scroll (vertical):<br>
     snapHelper.attachToRecyclerView(your_RecyclerView_name_managed_by_GridLayoutManager);
     ```
 
-    
-
 ## APIs
 
 ```java
 // set listener
-snapHelper.setOnPageChangeListener(new GridPagerSnapHelper.OnPageChangeListener() {
-  @Override
-  public void onChange(int pageBeforeChange, int pageAfterChange) {
-      // Function will be called when current page is changed.
-  }
-});
+snapHelper.setOnPageChangeListener(new GridPagerSnapHelper.OnPageChangeListener(){
+@Override
+public void onChange(int pageBeforeChange,int pageAfterChange){
+        // Function will be called when current page is changed.
+        }
+        });
 
 // scroll
-snapHelper.scrollToPage(target_page_index);
-snapHelper.smoothScrollToPage(target_page_index);
+        snapHelper.scrollToPage(target_page_index);
+        snapHelper.smoothScrollToPage(target_page_index);
 
 // others
-snapHelper.getCurrentPageIndex();
-snapHelper.getPageCount();
+        snapHelper.getCurrentPageIndex();
+        snapHelper.getPageCount();
 ```
