@@ -295,6 +295,7 @@ public class GridPagerSnapHelper extends SnapHelper {
 
         }
     }
+
     public int getCurrentPageIndex() {
         if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
             return currentPositionHorizontal / page_limit;
@@ -328,6 +329,7 @@ public class GridPagerSnapHelper extends SnapHelper {
             return true;
         } else return false;
     }
+
     public boolean scrollToPage(int page_index) {
         Log.i(TAG, String.format("scrollToPage: %d", page_index));
         if (page_index <= all_item / page_limit) {
