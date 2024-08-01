@@ -39,23 +39,22 @@ public class MainActivity extends AppCompatActivity {
 
 
         LinearLayout.LayoutParams lp_horizontal = new LinearLayout.LayoutParams(1100, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp_horizontal.setMargins(10,0,10,50);
+        lp_horizontal.setMargins(10, 0, 10, 50);
         LinearLayout.LayoutParams lp_vertical = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 1320);
-        initRecycler(lp_horizontal,15,3, 0);
-        initRecycler(lp_vertical,12,2, 1);
+        initRecycler(lp_horizontal, 15, 3, 0);
+        initRecycler(lp_vertical, 12, 2, 1);
 
     }
 
-    private void initRecycler(LinearLayout.LayoutParams lp,int page_limit, int row, int type) {
+    private void initRecycler(LinearLayout.LayoutParams lp, int page_limit, int row, int type) {
         List<View> list = new ArrayList<>();
         TextView tv;
         LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(30, 30);
-        lp2.setMargins(5,5,5,5);
-        for(int i = 0;i<51 ;i++)
-        {
+        lp2.setMargins(5, 5, 5, 5);
+        for (int i = 0; i < 51; i++) {
             tv = new TextView(this);
             tv.setText("text");
-            if(i % page_limit == 0)
+            if (i % page_limit == 0)
                 tv.setBackgroundColor(getColor(R.color.blue));
             else
                 tv.setBackgroundColor(getColor(R.color.red));
@@ -63,11 +62,9 @@ public class MainActivity extends AppCompatActivity {
             list.add(tv);
         }
         RecyclerView buttonPageScroll;
-        if(type == 0) {
+        if (type == 0) {
             buttonPageScroll = findViewById(R.id.rv1);
-        }
-        else
-        {
+        } else {
             buttonPageScroll = findViewById(R.id.rv2);
         }
         buttonPageScroll.setLayoutParams(lp);
@@ -88,14 +85,12 @@ public class MainActivity extends AppCompatActivity {
 
         Button btn1, btn2;
 
-        if(type == 0) {
+        if (type == 0) {
             btn1 = findViewById(R.id.btn_1);
             btn2 = findViewById(R.id.btn_2);
             btn1.setOnClickListener(v -> snapHelper.scrollToPage(0));
             btn2.setOnClickListener(v -> snapHelper.scrollToPage(snapHelper.getPageCount() - 1));
-        }
-        else
-        {
+        } else {
             btn1 = findViewById(R.id.btn_3);
             btn2 = findViewById(R.id.btn_4);
             btn1.setOnClickListener(v -> snapHelper.smoothScrollToPage(0));
@@ -104,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
     public static int dp2px(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, Resources.getSystem().getDisplayMetrics());
     }
@@ -112,10 +108,12 @@ public class MainActivity extends AppCompatActivity {
 
         int page_limit;
         int all_size;
+
         public ButtonPageScrollAdapter(int page_limit, int all_size) {
             this.page_limit = page_limit;
             this.all_size = all_size;
         }
+
         @NonNull
         @Override
         public ButtonPageScrollViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
