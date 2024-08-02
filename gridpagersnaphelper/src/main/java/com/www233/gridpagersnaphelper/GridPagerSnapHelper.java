@@ -305,6 +305,7 @@ public class GridPagerSnapHelper extends SnapHelper {
     }
 
     public int getPageCount() {
+        if(all_item % page_limit == 0) return all_item / page_limit;
         return all_item / page_limit + 1;
     }
 
