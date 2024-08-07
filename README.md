@@ -26,7 +26,13 @@ Scroll (vertical):<br>
 ## Features
 
 1. 支持按列滑动和按行滑动、直接设置当前页面
+
 2. 最后一个页面无需填满组件
+
+    + 实现方式：在调用`attachToRecyclerView`方法时，会为recyclerView的最后一行/列添加装饰器以确保其大小与其他页数符合一致，从而可以正常滑动页面
+
+        因此，当不需要用到该GridPageSnapHelper时，需要将此装饰器去掉（即调用`detachToRecyclerView`方法，在下一部分会提到）
+
 3. 拖动半个及以上组件的长度即可移动至下一页/上一页
 
 \* 各个组件的**尺寸须一致**，否则SnapHelper的距离计算会出现问题
@@ -39,14 +45,14 @@ Scroll (vertical):<br>
 
       ```groovy
       dependencies {
-        implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.1'
+        implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.2'
       }
       ```
 
     + or `build.gradle.kts`(Kotlin)
       ```kotlin
       dependencies {
-        implementation("io.github.wuww233:GridPagerSnapHelper:1.0.1")
+        implementation("io.github.wuww233:GridPagerSnapHelper:1.0.2")
       }
       ```
 
@@ -56,7 +62,15 @@ Scroll (vertical):<br>
     ```java
     // set Adapter and GridLayoutManager for your RecyclerView before setting GridPageSnapHelper
     GridPageSnapHelper snapHelper = new GridPageSnapHelper(max_size_in_each_row_or_line, max_size_of_each_page);
-    snapHelper.attachToRecyclerView(your_RecyclerView_name_managed_by_GridLayoutManager);
+    snapHelper.attachToRecyclerView(recyclerView);
+    
+    // If you want to attach recyclerView to another snapHelper, detach the current one firstly.
+    snapHelper.detachToRecyclerView();	// forgive my poor English :(
+    
+    // Then you can attach to another snapHelper
+    GridPageSnapHelper snapHelper2 = new GridPageSnapHelper(row, pageLimit);
+    snapHelper2.attachToRecyclerView(recyclerView);
+    
     ```
 
 ## APIs
@@ -77,4 +91,6 @@ snapHelper.smoothScrollToPage(target_page_index);
 // others
 snapHelper.getCurrentPageIndex();
 snapHelper.getPageCount();
+snapHelper.setRow(int row);
+snapHelper.setPageLimit(int pageLimit);
 ```
