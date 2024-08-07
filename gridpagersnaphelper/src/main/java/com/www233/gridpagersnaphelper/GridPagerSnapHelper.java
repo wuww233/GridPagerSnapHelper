@@ -1,7 +1,6 @@
 package com.www233.gridpagersnaphelper;
 
 import android.graphics.Rect;
-import android.os.Trace;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -10,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.OrientationHelper;
-import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
@@ -19,10 +17,11 @@ import java.util.Objects;
 public class GridPagerSnapHelper extends SnapHelper {
     private static final String TAG = "GridPageSnapHelper";
     private int currentPositionVertical = 0, currentPositionHorizontal = 0; // 记录当前页的首个index
-    private final int row, page_limit;  // row限制行数/列数, page_limit每页最大数量
+    private int row, pageLimit;  // row限制行数/列数, pageLimit每页最大数量
     private int all_item = 0;   // 控件总数
     private OrientationHelper mHorizontalHelper, mVerticalHelper;
     RecyclerView mRecyclerView;
+    int decorationIndex = -1;
     static final float MILLISECONDS_PER_INCH = 100f;
     private static final int MAX_SCROLL_ON_FLING_DURATION = 100; // ms
     private OnPageChangeListener onPageChangeListener = (pageBeforeChange, pageAfterChange) -> {
@@ -40,13 +39,23 @@ public class GridPagerSnapHelper extends SnapHelper {
      * 初始化
      *
      * @param row        不可移动的方向上有多少列/行
-     * @param page_limit 每一页最多有多少控件
+     * @param pageLimit 每一页最多有多少控件
      */
-    public GridPagerSnapHelper(int row, int page_limit) {
+    public GridPagerSnapHelper(int row, int pageLimit) {
         this.row = row;
-        this.page_limit = page_limit;
+        this.pageLimit = pageLimit;
     }
-
+    /**
+     * 如果之后要把recyclerView连到其他的snapHelper，则需要先调用之前snapHelper的detachToRecyclerView方法。
+     * 调用attachToRecyclerView时会为recyclerView的最后一行/列设置装饰器以填充剩余空间，
+     * 因此需要用detachToRecyclerView去掉此装饰器。
+     * @param recyclerView The RecyclerView instance to which you want to add this helper or
+     *                     {@code null} if you want to remove SnapHelper from the current
+     *                     RecyclerView.
+     *
+     * @throws IllegalStateException
+     * @see #detachToRecyclerView()
+     */
     @Override
     public void attachToRecyclerView(@Nullable RecyclerView recyclerView) throws IllegalStateException {
         super.attachToRecyclerView(recyclerView);
@@ -54,7 +63,30 @@ public class GridPagerSnapHelper extends SnapHelper {
             all_item = Objects.requireNonNull(recyclerView.getAdapter()).getItemCount();
             mRecyclerView = recyclerView;
             recyclerView.addItemDecoration(new ButtonPageScrollDecoration());
+            decorationIndex = recyclerView.getItemDecorationCount() - 1;
         }
+    }
+    public void detachToRecyclerView(){
+        if(mRecyclerView != null)
+        {
+            mRecyclerView.removeItemDecorationAt(decorationIndex);
+            mRecyclerView = null;
+        }
+    }
+
+    
+    @Override
+    protected void finalize() throws Throwable {
+        detachToRecyclerView();
+        super.finalize();
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public void setPageLimit(int pageLimit) {
+        this.pageLimit = pageLimit;
     }
 
     @NonNull
@@ -84,7 +116,7 @@ public class GridPagerSnapHelper extends SnapHelper {
         int currentPosition = (direction == Direction.HORIZONTAL ? currentPositionHorizontal : currentPositionVertical);
         int currentPageStart = currentPosition;
         int result;
-        if (Math.abs(targetPosition - currentPosition) >= page_limit) {
+        if (Math.abs(targetPosition - currentPosition) >= pageLimit) {
             // 目标view已加载出来，不用再计算移动距离而是可以直接获取: 滑动时会调用findTargetSnapPosition()直接得到targetView
             result = helper.getDecoratedStart(targetView) - helper.getStartAfterPadding();
             currentPageStart = targetPosition;
@@ -94,12 +126,12 @@ public class GridPagerSnapHelper extends SnapHelper {
             if (targetPosition < currentPosition - row
                     || dis <= (helper.getDecoratedMeasurement(targetView) / 2) && targetPosition < currentPosition) {
                 // 左移且移动半块以上
-                currentPageStart = currentPosition - page_limit;
+                currentPageStart = currentPosition - pageLimit;
 
             } else if (targetPosition >= currentPosition + row
                     || dis >= (helper.getDecoratedMeasurement(targetView) / 2) && targetPosition >= currentPosition) {
                 // 右移且移动半块以上
-                currentPageStart = currentPosition + page_limit;
+                currentPageStart = currentPosition + pageLimit;
             }
 
             int columnWidth = helper.getDecoratedMeasurement(targetView);
@@ -110,12 +142,12 @@ public class GridPagerSnapHelper extends SnapHelper {
         }
 
         if (direction == Direction.HORIZONTAL && currentPageStart != currentPositionHorizontal) {
-            onPageChangeListener.onChange(currentPositionHorizontal / page_limit,
-                    currentPageStart / page_limit);
+            onPageChangeListener.onChange(currentPositionHorizontal / pageLimit,
+                    currentPageStart / pageLimit);
             currentPositionHorizontal = currentPageStart;
         } else if (direction == Direction.VERTICAL && currentPageStart != currentPositionVertical) {
-            onPageChangeListener.onChange(currentPositionVertical / page_limit,
-                    currentPageStart / page_limit);
+            onPageChangeListener.onChange(currentPositionVertical / pageLimit,
+                    currentPageStart / pageLimit);
             currentPositionVertical = currentPageStart;
         }
 
@@ -191,17 +223,17 @@ public class GridPagerSnapHelper extends SnapHelper {
     private int findNextPagePosition(int velocity, int currentPosition) {
         if (velocity > 0)   // 向右滑动
         {
-            if (currentPosition + page_limit > all_item)
+            if (currentPosition + pageLimit > all_item)
                 return currentPosition;
             else
-                return currentPosition + page_limit;
+                return currentPosition + pageLimit;
 
         } else if (velocity < 0) // 向左滑动
         {
-            if (currentPosition - page_limit < 0)
+            if (currentPosition - pageLimit < 0)
                 return currentPosition;
             else
-                return currentPosition - page_limit;
+                return currentPosition - pageLimit;
         }
         return RecyclerView.NO_POSITION;
     }
@@ -283,8 +315,8 @@ public class GridPagerSnapHelper extends SnapHelper {
             int position = parent.getChildAdapterPosition(view);
             RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
             if (position >= last_line_st) { // 最后一列/列边距到末尾
-                int line = (position % page_limit) / row + 1;
-                int all_line = page_limit / row;
+                int line = (position % pageLimit) / row + 1;
+                int all_line = pageLimit / row;
 
                 assert layoutManager != null;
                 if (layoutManager.canScrollHorizontally())
@@ -298,15 +330,15 @@ public class GridPagerSnapHelper extends SnapHelper {
 
     public int getCurrentPageIndex() {
         if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
-            return currentPositionHorizontal / page_limit;
+            return currentPositionHorizontal / pageLimit;
         } else {
-            return currentPositionVertical / page_limit;
+            return currentPositionVertical / pageLimit;
         }
     }
 
     public int getPageCount() {
-        if (all_item % page_limit == 0) return all_item / page_limit;
-        return all_item / page_limit + 1;
+        if (all_item % pageLimit == 0) return all_item / pageLimit;
+        return all_item / pageLimit + 1;
     }
 
     /**
@@ -317,15 +349,15 @@ public class GridPagerSnapHelper extends SnapHelper {
      */
     public boolean smoothScrollToPage(int page_index) {
         Log.i(TAG, String.format("scrollToPage: %d", page_index));
-        if (page_index <= all_item / page_limit) {
+        if (page_index <= all_item / pageLimit) {
             if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
                 mRecyclerView.smoothScrollBy(mRecyclerView.getLayoutManager().getWidth()
-                        * (page_index - currentPositionHorizontal / page_limit), 0);
-                currentPositionHorizontal = page_index * page_limit;
+                        * (page_index - currentPositionHorizontal / pageLimit), 0);
+                currentPositionHorizontal = page_index * pageLimit;
             } else {
                 mRecyclerView.smoothScrollBy(0, mRecyclerView.getLayoutManager().getHeight()
-                        * (page_index - currentPositionVertical / page_limit));
-                currentPositionVertical = page_index * page_limit;
+                        * (page_index - currentPositionVertical / pageLimit));
+                currentPositionVertical = page_index * pageLimit;
             }
             return true;
         } else return false;
@@ -333,15 +365,15 @@ public class GridPagerSnapHelper extends SnapHelper {
 
     public boolean scrollToPage(int page_index) {
         Log.i(TAG, String.format("scrollToPage: %d", page_index));
-        if (page_index <= all_item / page_limit) {
+        if (page_index <= all_item / pageLimit) {
             if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
                 mRecyclerView.scrollBy(mRecyclerView.getLayoutManager().getWidth()
-                        * (page_index - currentPositionHorizontal / page_limit), 0);
-                currentPositionHorizontal = page_index * page_limit;
+                        * (page_index - currentPositionHorizontal / pageLimit), 0);
+                currentPositionHorizontal = page_index * pageLimit;
             } else {
                 mRecyclerView.scrollBy(0, mRecyclerView.getLayoutManager().getHeight()
-                        * (page_index - currentPositionVertical / page_limit));
-                currentPositionVertical = page_index * page_limit;
+                        * (page_index - currentPositionVertical / pageLimit));
+                currentPositionVertical = page_index * pageLimit;
             }
             return true;
         } else return false;
