@@ -45,14 +45,14 @@ Scroll (vertical):<br>
 
       ```groovy
       dependencies {
-        implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.2'
+        implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.3'
       }
       ```
 
     + or `build.gradle.kts`(Kotlin)
       ```kotlin
       dependencies {
-        implementation("io.github.wuww233:GridPagerSnapHelper:1.0.2")
+        implementation("io.github.wuww233:GridPagerSnapHelper:1.0.3")
       }
       ```
 
