@@ -70,6 +70,8 @@ public class GridPagerSnapHelper extends SnapHelper {
         if(mRecyclerView != null)
         {
             mRecyclerView.removeItemDecorationAt(decorationIndex);
+            mRecyclerView.setOnFlingListener(null);
+            mRecyclerView.clearOnScrollListeners();
             mRecyclerView = null;
         }
     }
