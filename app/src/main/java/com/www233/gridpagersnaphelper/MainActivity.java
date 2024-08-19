@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,14 +63,40 @@ public class MainActivity extends AppCompatActivity {
             list.add(tv);
         }
         RecyclerView buttonPageScroll;
+
         if (type == 0) {
             buttonPageScroll = findViewById(R.id.rv1);
         } else {
             buttonPageScroll = findViewById(R.id.rv2);
         }
+
+
+        // TODO:改变子view宽度
+        buttonPageScroll.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override
+            public void onChildViewAttachedToWindow(@NonNull View view) {
+
+            }
+
+            @Override
+            public void onChildViewDetachedFromWindow(@NonNull View view) {
+
+            }
+        });
+
+
         buttonPageScroll.setLayoutParams(lp);
         buttonPageScroll.setBackgroundColor(getColor(R.color.green_light));
-        ButtonPageScrollAdapter myAdapter = new ButtonPageScrollAdapter(page_limit, 50);
+        ButtonPageScrollAdapter myAdapter;
+
+        if (type == 1) {
+            myAdapter = new ButtonPageScrollAdapter(page_limit, row,
+                    createDataList(50));
+        } else {    // 表格中数据排列方式变化
+            myAdapter = new ButtonPageScrollAdapter(page_limit, row,
+                    GridPagerUtils.transform(createDataList(50), row, page_limit));
+        }
+
 
         buttonPageScroll.setAdapter(myAdapter);
         GridLayoutManager gridLayoutManager;
@@ -100,6 +127,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    List<String> createDataList(int cnt) {
+        List<String> viewList = new ArrayList<>();
+        for (int i = 0; i < cnt; i++) {
+            viewList.add(String.format(Locale.getDefault(), "[%d]", i));
+        }
+        return viewList;
+    }
+
     public static int dp2px(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, Resources.getSystem().getDisplayMetrics());
     }
@@ -107,11 +142,13 @@ public class MainActivity extends AppCompatActivity {
     class ButtonPageScrollAdapter extends RecyclerView.Adapter<ButtonPageScrollViewHolder> {
 
         int page_limit;
-        int all_size;
+        int row;
+        List<String> dataList;
 
-        public ButtonPageScrollAdapter(int page_limit, int all_size) {
+        public ButtonPageScrollAdapter(int page_limit, int row, List<String> dataList) {
             this.page_limit = page_limit;
-            this.all_size = all_size;
+            this.row = row;
+            this.dataList = dataList;
         }
 
         @NonNull
@@ -130,12 +167,12 @@ public class MainActivity extends AppCompatActivity {
             else
                 holder.view.setBackgroundColor(getResources().getColor(R.color.blue, getTheme()));
             holder.view.setLayoutParams(lp2);
-            ((TextView) holder.view).setText(String.valueOf(position));
+            ((TextView) holder.view).setText(dataList.get(position));
         }
 
         @Override
         public int getItemCount() {
-            return all_size;
+            return dataList.size();
         }
     }
 
