@@ -35,7 +35,31 @@ Scroll (vertical):<br>
 
 3. 拖动半个及以上组件的长度即可移动至下一页/上一页
 
-\* 各个组件的**尺寸须一致**，否则SnapHelper的距离计算会出现问题
+4. 提供工具类，可以将以List形式组织的原数据更改顺序，从而更改在表格中的显示方向
+    + 例如：调整后，数据的显示格式会从图1变为图2
+    
+        <table style="display:initial">
+            <tr style="border:0px">
+            	<td style="border:0px"><img src="https://raw.githubusercontent.com/wuww233/wwwImage/main/img/Screenshot_20240820_102035.jpg" alt="图1" /></td>
+            	<td style="border:0px"><img src="https://raw.githubusercontent.com/wuww233/wwwImage/main/img/Screenshot_20240820_102053.jpg" alt="图2"  /></td>
+            </tr>
+        </table>
+
+5. 可自动根据recyclerView的尺寸调整子组件的宽度或高度（通过直接修改原组件的layoutParams）
+
+    ！各个组件在移动方向上的尺寸**必须一致**，否则SnapHelper的距离计算会出现问题
+
+
+
+## Updates
+
++ `1.1.0`
+
+    + Class `GridPagerUtils` for data transforming
+
+    + Function `setChildAutoAdjust` for size adjustment
+
+
 
 ## How to use
 
@@ -45,14 +69,14 @@ Scroll (vertical):<br>
 
       ```groovy
       dependencies {
-        implementation 'io.github.wuww233:GridPagerSnapHelper:1.0.3'
+        implementation 'io.github.wuww233:GridPagerSnapHelper:1.1.0'
       }
       ```
 
     + or `build.gradle.kts`(Kotlin)
       ```kotlin
       dependencies {
-        implementation("io.github.wuww233:GridPagerSnapHelper:1.0.3")
+        implementation("io.github.wuww233:GridPagerSnapHelper:1.1.0")
       }
       ```
 
@@ -60,9 +84,15 @@ Scroll (vertical):<br>
 2. Use it in your code
 
     ```java
-    // set Adapter and GridLayoutManager for your RecyclerView before setting GridPageSnapHelper
+    // optimal : transform data
+    List<T> data_transform = GridPagerUtils.transform(dataList, row, pageLimit);
+    
+    // Set Adapter and GridLayoutManager for your RecyclerView before setting GridPageSnapHelper
     GridPageSnapHelper snapHelper = new GridPageSnapHelper(max_size_in_each_row_or_line, max_size_of_each_page);
     snapHelper.attachToRecyclerView(recyclerView);
+    
+    // optimal : automaticly adjust width / height
+    snapHelper.setChildAutoAdjust(true, true);
     
     // If you want to attach recyclerView to another snapHelper, detach the current one firstly.
     snapHelper.detachToRecyclerView();	// forgive my poor English :(
@@ -73,7 +103,7 @@ Scroll (vertical):<br>
     
     ```
 
-## APIs
+## Other APIs
 
 ```java
 // set listener
