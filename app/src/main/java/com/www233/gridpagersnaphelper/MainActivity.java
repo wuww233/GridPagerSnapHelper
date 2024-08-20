@@ -71,21 +71,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        // TODO:改变子view宽度
-        buttonPageScroll.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
-            @Override
-            public void onChildViewAttachedToWindow(@NonNull View view) {
 
-            }
-
-            @Override
-            public void onChildViewDetachedFromWindow(@NonNull View view) {
-
-            }
-        });
-
-
-        buttonPageScroll.setLayoutParams(lp);
+//        buttonPageScroll.setLayoutParams(lp);
         buttonPageScroll.setBackgroundColor(getColor(R.color.green_light));
         ButtonPageScrollAdapter myAdapter;
 
@@ -109,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
         GridPagerSnapHelper snapHelper = new GridPagerSnapHelper(row, page_limit);
         snapHelper.attachToRecyclerView(buttonPageScroll);
         snapHelper.setOnPageChangeListener((pageBeforeChange, pageAfterChange) -> Log.i(TAG, String.format("onChange: %d -> %d", pageBeforeChange, pageAfterChange)));
-
         Button btn1, btn2;
+        snapHelper.setChildAutoAdjust(true,true);
 
         if (type == 0) {
             btn1 = findViewById(R.id.btn_1);
@@ -160,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ButtonPageScrollViewHolder holder, int position) {
-            LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(200, 200);
+            LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(150, 150);
             lp2.setMargins(10, 10, 10, 10);
             if (position % page_limit == 0)
                 holder.view.setBackgroundColor(getResources().getColor(R.color.red, getTheme()));
