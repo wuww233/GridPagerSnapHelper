@@ -7,6 +7,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +27,7 @@ public class GridPagerSnapHelper extends SnapHelper {
     private static final int MAX_SCROLL_ON_FLING_DURATION = 100; // ms
     private OnPageChangeListener onPageChangeListener = (pageBeforeChange, pageAfterChange) -> {
     };
+    private boolean widthAdjust, heightAdjust;
 
     private static class Direction {
         static final int HORIZONTAL = 0, VERTICAL = 1;
@@ -38,21 +40,22 @@ public class GridPagerSnapHelper extends SnapHelper {
     /**
      * 初始化
      *
-     * @param row        不可移动的方向上有多少列/行
+     * @param row       不可移动的方向上有多少列/行
      * @param pageLimit 每一页最多有多少控件
      */
     public GridPagerSnapHelper(int row, int pageLimit) {
         this.row = row;
         this.pageLimit = pageLimit;
     }
+
     /**
      * 如果之后要把recyclerView连到其他的snapHelper，则需要先调用之前snapHelper的detachToRecyclerView方法。
      * 调用attachToRecyclerView时会为recyclerView的最后一行/列设置装饰器以填充剩余空间，
      * 因此需要用detachToRecyclerView去掉此装饰器。
+     *
      * @param recyclerView The RecyclerView instance to which you want to add this helper or
      *                     {@code null} if you want to remove SnapHelper from the current
      *                     RecyclerView.
-     *
      * @throws IllegalStateException
      * @see #detachToRecyclerView()
      */
@@ -64,11 +67,54 @@ public class GridPagerSnapHelper extends SnapHelper {
             mRecyclerView = recyclerView;
             recyclerView.addItemDecoration(new ButtonPageScrollDecoration());
             decorationIndex = recyclerView.getItemDecorationCount() - 1;
+
+            onChildAttachStateChangeListener = new RecyclerView.OnChildAttachStateChangeListener() {
+                @Override
+                public void onChildViewAttachedToWindow(@NonNull View view) {
+                    if (!widthAdjust && !heightAdjust) return;
+
+                    RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+                    int each_width = view.getMeasuredWidth();
+                    int each_height = view.getMeasuredHeight();
+
+                    Log.d(TAG, String.format("onChildViewAttachedToWindow: parent[%d,%d]", mRecyclerView.getMeasuredWidth(),
+                            mRecyclerView.getMeasuredHeight()));
+
+                    if (layoutManager.canScrollHorizontally()) {
+                        each_width = mRecyclerView.getMeasuredWidth() / (pageLimit / row);
+                        each_height = mRecyclerView.getMeasuredHeight() / (row);
+                    }
+                    if (layoutManager.canScrollVertically()) {
+                        each_height = mRecyclerView.getMeasuredHeight() / (pageLimit / row);
+                        each_width = mRecyclerView.getMeasuredWidth() / (row);
+                    }
+                    GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) view.getLayoutParams();
+
+                    if (layoutParams == null) {
+                        layoutParams = new GridLayoutManager.LayoutParams(each_width, each_height);
+                    } else {
+                        if (widthAdjust)
+                            layoutParams.width = each_width - layoutParams.leftMargin - layoutParams.rightMargin;
+                        if (heightAdjust)
+                            layoutParams.height = each_height - layoutParams.topMargin - layoutParams.bottomMargin;
+
+                        Log.d(TAG, String.format("onChildViewAttachedToWindow: width[%d,%d] %d %d", layoutParams.width,
+                                layoutParams.height, layoutParams.leftMargin, layoutParams.rightMargin));
+                    }
+                    view.setLayoutParams(layoutParams);
+                }
+
+                @Override
+                public void onChildViewDetachedFromWindow(@NonNull View view) {
+
+                }
+            };
+            mRecyclerView.addOnChildAttachStateChangeListener(onChildAttachStateChangeListener);
         }
     }
-    public void detachToRecyclerView(){
-        if(mRecyclerView != null)
-        {
+
+    public void detachToRecyclerView() {
+        if (mRecyclerView != null) {
             mRecyclerView.removeItemDecorationAt(decorationIndex);
             mRecyclerView.setOnFlingListener(null);
             mRecyclerView.clearOnScrollListeners();
@@ -76,7 +122,7 @@ public class GridPagerSnapHelper extends SnapHelper {
         }
     }
 
-    
+
     @Override
     protected void finalize() throws Throwable {
         detachToRecyclerView();
@@ -350,7 +396,7 @@ public class GridPagerSnapHelper extends SnapHelper {
      * @return success(true) or not(false)
      */
     public boolean smoothScrollToPage(int page_index) {
-        Log.i(TAG, String.format("scrollToPage: %d", page_index));
+        Log.d(TAG, String.format("smoothScrollToPage: %d", page_index));
         if (page_index <= all_item / pageLimit) {
             if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
                 mRecyclerView.smoothScrollBy(mRecyclerView.getLayoutManager().getWidth()
@@ -366,7 +412,7 @@ public class GridPagerSnapHelper extends SnapHelper {
     }
 
     public boolean scrollToPage(int page_index) {
-        Log.i(TAG, String.format("scrollToPage: %d", page_index));
+        Log.d(TAG, String.format("scrollToPage: %d", page_index));
         if (page_index <= all_item / pageLimit) {
             if (mRecyclerView.getLayoutManager().canScrollHorizontally()) {
                 mRecyclerView.scrollBy(mRecyclerView.getLayoutManager().getWidth()
@@ -379,6 +425,21 @@ public class GridPagerSnapHelper extends SnapHelper {
             }
             return true;
         } else return false;
+    }
+
+    RecyclerView.OnChildAttachStateChangeListener onChildAttachStateChangeListener;
+
+
+    /**
+     * warning:此方法会调用Adapter的notifyDataSetChanged方法对整个列表进行刷新
+     *
+     * @param widthAdjust  是否需要自动调整宽度
+     * @param heightAdjust 是否需要自动调整高度
+     */
+    public void setChildAutoAdjust(boolean widthAdjust, boolean heightAdjust) {
+        this.widthAdjust = widthAdjust;
+        this.heightAdjust = heightAdjust;
+        mRecyclerView.getAdapter().notifyDataSetChanged();
     }
 
 }
