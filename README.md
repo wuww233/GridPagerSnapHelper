@@ -36,7 +36,7 @@ Scroll (vertical):<br>
 3. 拖动半个及以上组件的长度即可移动至下一页/上一页
 
 4. 提供工具类，可以将以List形式组织的原数据更改顺序，从而更改在表格中的显示方向
-    + 例如：调整后，数据的显示格式会从图1变为图2
+    + 例如：调整后，数据的显示格式会从左图变为右图
     
         <table style="display:initial">
             <tr style="border:0px">
@@ -92,7 +92,8 @@ Scroll (vertical):<br>
     snapHelper.attachToRecyclerView(recyclerView);
     
     // optimal : automaticly adjust width / height
-    snapHelper.setChildAutoAdjust(true, true);
+    boolean widthAdjust = true, heightAdjust = true;
+    snapHelper.setChildAutoAdjust(widthAdjust, heightAdjust);
     
     // If you want to attach recyclerView to another snapHelper, detach the current one firstly.
     snapHelper.detachToRecyclerView();	// forgive my poor English :(
